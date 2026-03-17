@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome           String
+  email          String         @unique
+  password       String
+  role           String         @default("assistente")
+  ativo          Boolean        @default(true)
+  created_at     DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime       @updatedAt @db.Timestamptz(6)
+  appointments   Appointment[]  @relation("UserAppointments")
+  refresh_tokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  token      String   @unique
+  expires_at DateTime @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("refresh_tokens")
+}
+
+model Appointment {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome_paciente         String
+  created_by            String?  @db.Uuid
+  data_atendimento      DateTime @default(now()) @db.Timestamptz(6)
+  tipo_tratamento       String
+  status_comparecimento String
+  encaminhamento        String
+  tipo_atendimento      String
+  cid                   String
+  observacoes           String?
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime @updatedAt @db.Timestamptz(6)
+  creator               User?    @relation("UserAppointments", fields: [created_by], references: [id])
+
+  @@index([data_atendimento])
+  @@map("appointments")
+}
+
+model FieldOption {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category   String
+  label      String
+  value      String
+  active     Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  @@map("field_options")
+}
+
+enum PatientStatus {
+  Ativo
+  Obito       @map("Óbito")
+  Alta
+  Transferido
+}
+
+enum TipoTratamento {
+  Quimioterapia
+  Radioterapia
+  Quimio_Radio  @map("Quimioterapia + Radioterapia concomitante")
+  Controle
+  Paliativo
+}
+
+enum StatusCompar {
+  Compareceu
+  Nao_Compareceu @map("Não Compareceu")
+  Justificou
+}
+
+enum Encaminhamento {
+  Equipe_Medica           @map("Equipe Médica")
+  Equipe_Multidisciplinar @map("Equipe Multidisciplinar")
+  Rede_Apoio              @map("Rede de Apoio")
+  Nenhum
+}
+
+enum TipoAtendimento {
+  Formularios           @map("Formulários")
+  Relatorio             @map("Relatório")
+  Orientacoes           @map("Orientações")
+  Relatorio_Formulario  @map("Relatório+Formulário")
+  Relatorio_Orientacoes @map("Relatório+Orientações")
+  Baixa_Prontuario      @map("Baixa de Prontuário")
+  Banco_Perucas         @map("Banco de Perucas")
+  Nao_Compareceu        @map("Não compareceu")
+}
