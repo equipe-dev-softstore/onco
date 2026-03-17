@@ -1,3 +1,8 @@
+name: Build e Deploy Onco  # Opcional, mas ajuda a identificar no painel
+on:
+  push:
+    branches:
+      - main
 jobs:
   build-and-deploy: 
     runs-on: ubuntu-latest
@@ -10,7 +15,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+      
       - name: Build e Push Backend
         uses: docker/build-push-action@v5
         with:
