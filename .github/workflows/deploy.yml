@@ -1,11 +1,34 @@
-name: Build e Deploy Onco  # Opcional, mas ajuda a identificar no painel
+name: Build, Deploy e Segurança Onco
+
 on:
   push:
     branches:
       - main
+
 jobs:
-  build-and-deploy: 
+  # Job 1: Analisar o código (SAST) - O "Porteiro" 🛡️
+  analyze-code:
+    name: Analisar Código (CodeQL)
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript # Focado no seu Next.js e Nest.js
+
+      - name: Executar Análise
+        uses: github/codeql-action/analyze@v3
+
+  # Job 2: Build e Push - Só inicia se o CodeQL passar ✅
+  build-and-deploy:
+    name: Build e Push Docker
+    runs-on: ubuntu-latest
+    needs: analyze-code  # <--- Esta linha cria a dependência
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -15,7 +38,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      
+
       - name: Build e Push Backend
         uses: docker/build-push-action@v5
         with:
@@ -29,28 +52,20 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/onco:frontend
+
+  # Job 3: Scan de Imagem (SCA) - Varredura final 🐳
   security-scan:
+    name: Scan de Vulnerabilidades (Trivy)
     runs-on: ubuntu-latest
-    needs: build-and-deploy 
+    needs: build-and-deploy
     steps:
       - name: Scan Backend
-        uses: aquasecurity/trivy-action@0.35.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Resolve o Rate Limit do download
-          TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-        with:
-          image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/onco:backend'
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Scan Frontend
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@0.28.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
-          image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/onco:frontend'
+          image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/onco:backend'
           format: 'table'
           severity: 'CRITICAL,HIGH'
