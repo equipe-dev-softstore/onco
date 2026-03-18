@@ -34,7 +34,7 @@ jobs:
     needs: build-and-deploy 
     steps:
       - name: Scan Backend
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.35.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Resolve o Rate Limit do download
           TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
