@@ -29,3 +29,29 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/onco:frontend
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-deploy 
+    steps:
+      - name: Checkout (necessário para baixar o Trivy)
+        uses: actions/checkout@v4
+
+      - name: Scan Backend
+        uses: aquasecurity/trivy-action@0.28.0 # Use versão fixa para estabilidade
+        env:
+          TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+        with:
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/onco:backend'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Scan Frontend
+        uses: aquasecurity/trivy-action@0.28.0
+        env:
+          TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+        with:
+          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/onco:frontend'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
