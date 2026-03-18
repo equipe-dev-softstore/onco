@@ -29,7 +29,7 @@ export class DashboardService {
           COUNT(*) FILTER (WHERE status_comparecimento = 'Não Compareceu') AS nao_compareceu
         FROM appointments
         WHERE data_atendimento >= '${start}'::date AND data_atendimento <= '${end}'::date + interval '1 day'
-      `);
+      `),
 
       // Pacientes por tipo de tratamento (1ª vez) no período
       this.prisma.$queryRawUnsafe<any[]>(`
