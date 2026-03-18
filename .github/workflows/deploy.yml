@@ -33,25 +33,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-deploy 
     steps:
-      - name: Checkout (necessário para baixar o Trivy)
-        uses: actions/checkout@v4
-
       - name: Scan Backend
-        uses: aquasecurity/trivy-action@0.28.0 # Use versão fixa para estabilidade
+        uses: aquasecurity/trivy-action@v0.28.0 # Use sempre o 'v' antes da versão
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Resolve o Rate Limit do download
           TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/onco:backend'
+          image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/onco:backend'
           format: 'table'
           severity: 'CRITICAL,HIGH'
 
       - name: Scan Frontend
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.28.0
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRIVY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
         with:
-          image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/onco:frontend'
+          image-ref: 'docker.io/${{ secrets.DOCKERHUB_USERNAME }}/onco:frontend'
           format: 'table'
           severity: 'CRITICAL,HIGH'
