@@ -59,6 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-deploy
     steps:
+
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
       - name: Scan Backend
         uses: aquasecurity/trivy-action@0.28.0
         env:
